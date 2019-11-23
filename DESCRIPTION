@@ -1,7 +1,7 @@
 Package: sparcnetfsu
 Title: Research compendium for SPARCnet at Frostburg State University
 Version: 0.0.0.9000
-Authors@R: 
+Authors@R:
     person(given = "Daniel",
            family = "Hocking",
            role = c("aut", "cre"),
@@ -13,3 +13,7 @@ Encoding: UTF-8
 LazyData: true
 URL: https://github.com/djhocking/sparcnetfsu
 BugReports: https://github.com/djhocking/sparcnetfsu/issues
+Imports: bookdown,
+    here
+Suggests: devtools,
+    git2r
