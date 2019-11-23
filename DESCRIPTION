@@ -1,0 +1,13 @@
+Package: sparcnetfsu
+Title: Research compendium for SPARCnet at Frostburg State University
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Daniel",
+           family = "Hocking",
+           role = c("aut", "cre"),
+           email = "djhocking@frostburg.edu")
+Description: This research compendium is for the organization and analysis of SPARCnet data at Frostburg State University. SPARCnet is the Salamander Population and Adaptation Research Collaborative Network. The goal of the project is to understand the population dyanmics of red-backed salamanders (Plethodon cinereus) across their entire geographic range. This package is just for the plots located in Western Maryland and started in 2017.
+License: MIT + file LICENSE
+ByteCompile: true
+Encoding: UTF-8
+LazyData: true
