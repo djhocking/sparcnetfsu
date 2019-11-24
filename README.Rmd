@@ -58,3 +58,7 @@ remotes::install_github("djhocking/sparcnetfsu")
 
 We welcome contributions from everyone. Before you get started, please see our [contributor guidelines](CONTRIBUTING.md). Please note that this project is released with a [Contributor Code of Conduct](CONDUCT.md). By participating in this project you agree to abide by its terms.
 
+
+This compendium was build using the R package `rrtools`: [https://github.com/benmarwick/rrtools](https://github.com/benmarwick/rrtools)
+
+You can read more about the concept of reproducible research and using this compendium concept at [https://peerj.com/preprints/3192.pdf](https://peerj.com/preprints/3192.pdf)
