@@ -5,3 +5,5 @@
 *.DS_Store
 
 grants/
+
+analysis/data/derived_data/
