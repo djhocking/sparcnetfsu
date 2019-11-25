@@ -59,9 +59,9 @@ remotes::install_github("djhocking/sparcnetfsu")
 
 ### Permits and Permissions
 
-**IACUC:** 
+**IACUC AUP:** A2017-006, A2018-013
 
-**State Permits:**
+**State Permits:** 56702
 
 ### Contributions
 
