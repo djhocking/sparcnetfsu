@@ -2,7 +2,7 @@
 FROM rocker/verse:3.6.1
 
 # required
-MAINTAINER Daniel J Hocking <djhocking@frostburg.edu>
+MAINTAINER Daniel Hocking <djhocking@gmail.com>
 
 COPY . /sparcnetfsu
 

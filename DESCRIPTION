@@ -14,7 +14,7 @@ LazyData: true
 URL: https://github.com/djhocking/sparcnetfsu
 BugReports: https://github.com/djhocking/sparcnetfsu/issues
 Imports: bookdown,
-    here
+    here, dplyr, tidyr, readr, lubridate, ggplot2
 Suggests: 
     devtools,
     git2r,
