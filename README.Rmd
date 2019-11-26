@@ -18,6 +18,8 @@ Title <- "Densities and population dynamics of red-backed salamanders in Western
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/djhocking/sparcnetfsu/master?urlpath=rstudio)
 
+[![Build Status](https://travis-ci.org/djhocking/sparcnetfsu.svg?branch=master)](https://travis-ci.org/djhocking/sparcnetfsu)
+
 <!--
 
 This repository contains the data and code for our paper:
