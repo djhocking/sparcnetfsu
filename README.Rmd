@@ -18,6 +18,8 @@ Title <- "Densities and population dynamics of red-backed salamanders in Western
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/djhocking/sparcnetfsu/master?urlpath=rstudio)
 
+<!--
+
 This repository contains the data and code for our paper:
 
 > Authors, (YYYY). _`r Title`_. Name of journal/book <https://doi.org/xxx/xxx>
@@ -26,6 +28,7 @@ Our pre-print is online here:
 
 > Authors, (YYYY). _`r Title`_. Name of journal/book, Accessed `r format(Sys.Date(), "%d %b %Y")`. Online at <https://doi.org/xxx/xxx>
 
+-->
 
 ### How to cite
 
@@ -56,14 +59,16 @@ remotes::install_github("djhocking/sparcnetfsu")
 
 ### Permits and Permissions
 
-**IACUC:** 
+**IACUC AUP:** A2017-006, A2018-013
 
-**State Permits:**
+**State Permits:** 56702
 
 ### Contributions
 
-We welcome contributions from everyone. Before you get started, please see our [contributor guidelines](CONTRIBUTING.md). Please note that this project is released with a [Contributor Code of Conduct](CONDUCT.md). By participating in this project you agree to abide by its terms.
+We welcome contributions and collaborations. Before you get started, please see our [contributor guidelines](CONTRIBUTING.md). Please note that this project is released with a [Contributor Code of Conduct](CONDUCT.md). By participating in this project you agree to abide by its terms.
 
+
+### Resources
 
 This compendium was build using the R package `rrtools`: [https://github.com/benmarwick/rrtools](https://github.com/benmarwick/rrtools)
 
