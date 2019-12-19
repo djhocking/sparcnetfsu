@@ -1,7 +1,7 @@
 ---
-title: "Title Goes Here"
+title: "Red-Backed Salamander Spatial Capture Recapture"
 author:
-  - Myfirstname Mylastname:
+  - Emily Phillips:
       email: fl@oneplace.edu
       institute: [UofO]
       correspondence: true
