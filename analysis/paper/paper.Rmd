@@ -1,16 +1,16 @@
 ---
-title: "Title Goes Here"
+title: "Red-Backed Salamander Spatial Capture Recapture"
 author:
-  - Myfirstname Mylastname:
+  - Emily Phillips:
       email: fl@oneplace.edu
       institute: [UofO]
       correspondence: true
-  - Yourfirstname Yourlastname:
-      email: fl@another.edu
-      institute: [UofA]
+  - Daniel Hocking:
+      email: djhocking@frostburg.edu
+      institute: [Uof0]
       correspondence: false
 institute:
-  - UofO: University of One Place
+  - UofO: Frostburg State University
   - UofA: University of Another Place
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
