@@ -3,7 +3,9 @@
 .RData
 .DS_Store
 *.DS_Store
+*._*
 
 grants/
 
 analysis/data/derived_data/
+analysis/figures/
