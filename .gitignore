@@ -3,9 +3,12 @@
 .RData
 .DS_Store
 *.DS_Store
+*._*
 
 grants/
 
 analysis/data/derived_data/
 
 R/sandbox.R
+analysis/figures/
+
