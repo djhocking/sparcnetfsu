@@ -21,10 +21,11 @@ for(i in 1:length(unique(sally$plot))) {
 pcin_1 <- sally %>%
   dplyr::filter(species == "PCIN",
                 plot == 1,
-                !is.na(markf),
-                !(markf %in% c("<NA>"))) %>%
-  tidyr::unite("id", c(sex, morph, markf), remove = FALSE) %>%
+                !is.na(id),
+                !(id %in% c("<NA>"))) %>%
+  # tidyr::unite("id", c(sex, morph, markf), remove = FALSE) %>%
   dplyr::select(pp, id = id, ss, board, sex) %>%
+  filter(sex %in% c("M", "F")) %>%
   dplyr::mutate(id = as.factor(id),
                 sex = as.factor(if_else(sex %in% c("M", "F"), sex, "U"))) %>% # oSCR can only handle 2 sexes
   as.data.frame()
@@ -38,6 +39,12 @@ sess_obs <- sally %>%
   summarise(K = max(ss, na.rm = TRUE)) %>%
   arrange(pp)
 
+# sess_obs_1 <- pcin_1 %>%
+#   group_by(pp) %>%
+#   dplyr::select(pp, ss) %>%
+#   summarise(K = max(ss, na.rm = TRUE)) %>%
+#   arrange(pp)
+
 boards <- expand.grid(col = LETTERS[1:5],
                       row = 0:9,
                       stringsAsFactors = FALSE) %>%
@@ -45,6 +52,9 @@ boards <- expand.grid(col = LETTERS[1:5],
   tidyr::unite("board", col:row, sep = "") %>%
   mutate(X = rep(0:4, each = 10),
          Y = rep(0:9, 5))
+
+pcin_1 <- pcin_1 %>%
+  filter(sex %in% c("M", "F"))
 
 pcin_1_oscr <- data2oscr(edf = pcin_1,
                          sess.col = 1,
