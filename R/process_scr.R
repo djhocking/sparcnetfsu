@@ -10,10 +10,13 @@ library(here)
 library(tidyr)
 library(oSCR)
 
+# testing
+testing <- TRUE
+
 #read data
 sally <- read_csv(here("analysis", "data", "raw_data", "salamander.csv"))
 
-# Set board grid
+# Make board grid
 boards <- expand.grid(col = LETTERS[1:5],
                       row = 0:9,
                       stringsAsFactors = FALSE) %>%
@@ -50,10 +53,50 @@ pcin_1 <- sally %>%
                 sex = as.factor(if_else(sex %in% c("M", "F"), sex, "U"))) %>% # oSCR can only handle 2 sexes
   as.data.frame()
 
+
+# temperature data
+temp <- read_csv(here::here("analysis", "data", "raw_data", "environmental_data_frostburg.csv")) %>%
+  rename_all(tolower) %>%
+  mutate(date = dmy(date),
+         soil = mean(soila + soilb, na.rm = TRUE))
+
+temp <- sally %>%
+  dplyr::select(date, plot, pp, ss) %>%
+  distinct() %>%
+  left_join(temp)
+
+# moisture data
+
 # construct tdf
-doy <- pcin_1 %>%
+doy <- sally %>%
+  group_by(pp, ss) %>%
+  dplyr::select(pp, ss, doy_s, doy_s_2) %>%
+  summarise_all(.funs = mean, na.rm = TRUE)
+
+doys <- doy %>%
+  ungroup() %>%
   group_by(pp) %>%
-  dplyr::select(pp, ss, doy_s, day_s_2)
+  dplyr::select(pp, ss, doy_s) %>%
+  group_split()
+
+doys2 <- doy %>%
+  ungroup() %>%
+  group_by(pp) %>%
+  dplyr::select(pp, ss, doy_s_2) %>%
+  group_split()
+
+tdf <- list()
+for(i in 1:length(unique(sally$pp))) {
+  tmp1 <- doys[[i]] %>%
+    tidyr::pivot_wider(names_from = ss, values_from = doy_s, names_prefix = "doys.") %>%
+    dplyr::select(-pp) %>%
+    data.frame(boards, sep = "/", .)
+  tmp2 <- doys2[[i]] %>%
+    tidyr::pivot_wider(names_from = ss, values_from = doy_s_2, names_prefix = "doys2.") %>%
+    dplyr::select(-pp) %>%
+    data.frame(boards, sep = "/", .)
+  tdf[[i]] <- left_join(tmp1, tmp2)
+}
 
 #--------- Check data ----------
 summary(pcin_1)
@@ -132,14 +175,16 @@ pcin_1_oscr <- data2oscr(edf = pcin_1,
                          occ.col = 3,
                          trap.col = 4,
                          sex.col = 5,
-                         tdf = list(boards,
-                                    boards,
-                                    boards,
-                                    boards,
-                                    boards,
-                                    boards),
+                         tdf = list(tdf[[1]],
+                                    tdf[[2]],
+                                    tdf[[3]],
+                                    tdf[[4]],
+                                    tdf[[5]],
+                                    tdf[[6]]),
                          K = sess_obs$K,
                          ntraps = rep(50, length(sess_obs$K)),
+                         trapcov.names = c("doys", "doys2"),
+                         tdf.sep = "/",
                          sex.nacode = "U")
 
 names(pcin_1_oscr)
@@ -149,12 +194,29 @@ pcin_1_oscr$scrFrame
 par(mfrow = c(3, 2), mar = c(2, 2, 2, 2), oma = c(0, 0, 0, 0))
 plot(pcin_1_oscr$scrFrame, jit = 2)
 
-pcin_1_ss <- make.ssDF(scrFrame = pcin_1_oscr$scrFrame, buffer = 4, res=0.5)
+if(testing) {
+pcin_1_ss <- make.ssDF(scrFrame = pcin_1_oscr$scrFrame, buffer = 1, res = 1)
+} else {
+  pcin_1_ss <- make.ssDF(scrFrame = pcin_1_oscr$scrFrame, buffer = 4, res = 0.5)
+}
 plot(ssDF = pcin_1_ss, scrFrame = pcin_1_oscr$scrFrame)
 
 #---------- SCR Analysis ---------
 
-m16 <- oSCR.fit(model = list(D ~ pp, #density
-                             p0 ~ pp + sex, #detection
-                             sig ~ pp + sex), #space use
-                scrFrame = pcin_1_ss, ssDF = pcin_1_oscr$scrFrame)
+m16 <- oSCR.fit(model = list(D ~ session, #density
+                             p0 ~ b + session + sex, #detection - fails with behavioral model for just one plot
+                             sig ~ 1 + sex), #space use
+                scrFrame = pcin_1_oscr$scrFrame, ssDF = pcin_1_ss)
+
+m0 <- oSCR.fit(model = list(D ~ 1, #density
+                             p0 ~ 1, #detection
+                             sig ~ 1), #space use
+                scrFrame = pcin_1_oscr$scrFrame, ssDF = pcin_1_ss)
+
+m16 <- oSCR.fit(model = list(D ~ session, #density
+                             p0 ~ session + sex, #detection - fails with behavioral model for just one plot
+                             sig ~ 1 + sex), #space use
+                scrFrame = pcin_1_oscr$scrFrame, ssDF = pcin_1_ss)
+
+
+
