@@ -55,17 +55,64 @@ pcin_1 <- sally %>%
 
 
 # temperature data
-temp <- read_csv(here::here("analysis", "data", "raw_data", "environmental_data_frostburg.csv")) %>%
+temp <- read_csv(here::here("analysis", "data", "raw_data", "environmental_data.csv")) %>%
   rename_all(tolower) %>%
-  mutate(date = dmy(date),
-         soil = mean(soila + soilb, na.rm = TRUE))
+  mutate(soil = rowMeans(dplyr::select(., starts_with("soil")), na.rm = TRUE),
+         air_s = (air - mean(air, na.rm = TRUE)) / sd(air, na.rm = TRUE),
+         soil_s = (soil - mean(soil, na.rm = TRUE)) / sd(soil, na.rm = TRUE))
 
 temp <- sally %>%
   dplyr::select(date, plot, pp, ss) %>%
   distinct() %>%
-  left_join(temp)
+  left_join(temp) %>%
+  group_by(pp, ss) %>%
+  dplyr::select(-date, -plot) %>%
+  dplyr::summarise_all(.funs = mean, na.rm = TRUE) %>%
+  arrange(pp, ss)
+
+temp_s <- temp %>%
+  ungroup() %>%
+  group_by(pp) %>%
+  dplyr::select(pp, ss, air_s, soil_s) %>%
+  group_split()
 
 # moisture data
+moist <- read_csv(here::here("analysis", "data", "raw_data", "soil_moisture.csv")) %>%
+  rename_all(tolower)
+
+moist <- sally %>%
+  dplyr::select(date, plot, pp, ss) %>%
+  distinct() %>%
+  left_join(moist) %>%
+  arrange(date, plot, pp, ss)
+
+moist %>%
+  dplyr::filter(is.na(water_pct)) %>%
+  as.data.frame() # too much missing to deal with now. Use rain instead
+
+# rain
+rain <- read_csv(here::here("analysis", "data", "raw_data", "weather_station.csv")) %>%
+  rename_all(tolower) %>%
+  dplyr::select(-month, -day, -doy, -year, -remarks) %>%
+  dplyr::mutate(date = ymd(date),
+                rain = raineq_in * 2.54,
+                rain_3d = RcppRoll::roll_sum(rain, 3, align = "right", fill = NA),
+                rain_3d_s = (rain_3d - mean(rain_3d, na.rm = TRUE)) / sd(rain_3d, na.rm = TRUE))
+
+rain <- sally %>%
+  dplyr::select(date, plot, pp, ss) %>%
+  distinct() %>%
+  left_join(rain) %>%
+  group_by(pp, ss) %>%
+  dplyr::select(-date, -plot, -snowpack) %>%
+  dplyr::summarise_all(.funs = mean, na.rm = TRUE) %>%
+  arrange(pp, ss)
+
+rain_s <- rain %>%
+  ungroup() %>%
+  group_by(pp) %>%
+  dplyr::select(pp, ss, rain_3d_s) %>%
+  group_split()
 
 # construct tdf
 doy <- sally %>%
@@ -95,7 +142,25 @@ for(i in 1:length(unique(sally$pp))) {
     tidyr::pivot_wider(names_from = ss, values_from = doy_s_2, names_prefix = "doys2.") %>%
     dplyr::select(-pp) %>%
     data.frame(boards, sep = "/", .)
-  tdf[[i]] <- left_join(tmp1, tmp2)
+  tmp3 <- rain_s[[i]] %>%
+    tidyr::pivot_wider(names_from = ss, values_from = rain_3d_s, names_prefix = "rain.") %>%
+    dplyr::select(-pp) %>%
+    data.frame(boards, sep = "/", .)
+  tmp4 <- temp_s[[i]] %>%
+    dplyr::select(-soil_s) %>%
+    tidyr::pivot_wider(names_from = ss, values_from = air_s, names_prefix = "air.") %>%
+    dplyr::select(-pp) %>%
+    data.frame(boards, sep = "/", .)
+  tmp5 <- temp_s[[i]] %>%
+    dplyr::select(-air_s) %>%
+    tidyr::pivot_wider(names_from = ss, values_from = soil_s, names_prefix = "soil.") %>%
+    dplyr::select(-pp) %>%
+    data.frame(boards, sep = "/", .)
+  tdf[[i]] <- tmp1 %>%
+    left_join(tmp2) %>%
+    left_join(tmp3) %>%
+    left_join(tmp4) %>%
+    left_join(tmp5)
 }
 
 #--------- Check data ----------
@@ -183,7 +248,7 @@ pcin_1_oscr <- data2oscr(edf = pcin_1,
                                     tdf[[6]]),
                          K = sess_obs$K,
                          ntraps = rep(50, length(sess_obs$K)),
-                         trapcov.names = c("doys", "doys2"),
+                         trapcov.names = c("doys", "doys2", "rain", "air", "soil"),
                          tdf.sep = "/",
                          sex.nacode = "U")
 
