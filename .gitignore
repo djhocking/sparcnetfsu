@@ -12,3 +12,5 @@ analysis/data/derived_data/
 R/sandbox.R
 analysis/figures/
 
+analysis/data/raw_data/sally_counts.csv
+
