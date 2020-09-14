@@ -270,3 +270,6 @@ for(i in 1:length(tdf)) {
 }
 
 save(pcin_1, tdf, session_df, boards, pp_obs, file = here::here("analysis", "data", "derived_data", "oSCR_prepped.Rdata"))
+
+rm(list = ls())
+gc()
