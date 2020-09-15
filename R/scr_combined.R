@@ -152,4 +152,8 @@ m13 <- oSCR.fit(model = list(D ~ session + sex, #density
 
 # add season
 
+# save all
+save(here::here("analysis", "results", "mod_results.RData"))
+
+
 
