@@ -1,3 +1,16 @@
+---
+title: "Untitled"
+author: "Allison K. Williams & Daniel J. Hocking"
+output: powerpoint_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      message = FALSE)
+```
+
+```{r}
 # Load packages
 library(dplyr)
 library(ggplot2)
@@ -6,23 +19,71 @@ library(lubridate)
 library(here)
 library(tidyr)
 library(oSCR)
+library(kableExtra)
 
 # load all
 load(here::here("analysis", "results", "mod_results.RData"))
+```
 
-# model comparison
-fl <- fitList.oSCR(list(m0,m1,m2,m3,m4,m5,m6,m7,m8,m9,m10,m11,m12),
-                   drop.asu=T, rename=TRUE) #rename=T adds sesnible model names
+## Objectives
 
-fl <- fitList.oSCR(list(m0, m1, m3),
-                   drop.asu=T, rename=TRUE)
+- Estimate red-backed salamander density
+- Estimate average home range size
+- Compare spatial and temporal variation in density
+- Examine the effects of rain and temperature on activity
 
-ms <- modSel.oSCR(fl)
-ms
+change these as you see fit
 
-#pick the model with the lowest AIC
-topmod <- fl[[which.min(sapply(fl,function(x) x$AIC))]]
+## Background
 
+- Bullet 1
+- Bullet 2
+- Bullet 3
+
+## Background
+
+More background
+
+## Location
+
+Western MD, forest type, blah blah blah
+
+## Study Design
+
+- 6 plots
+- 50 boards/plot on 1 m grid
+- SCR with VIE
+- Spring & Fall 2017-2019 (6 sessions)
+- 3-7 surveys per session
+
+## Methods
+
+More methods
+
+## Results
+
+```{r}
+kable(m9)
+```
+
+## Results
+
+Sex Ratios
+
+```{r}
+# Sex ratios
+sex_samps <- sapply(pcin_1_oscr$scrFrame$indCovs, function(x) table(x$sex))
+sex_samps <- rbind(sex_samps, round(sex_samps[1,] / apply(sex_samps,2,sum),2))
+dimnames(sex_samps) <- list(c("F","M","Prop.F"), paste0("S",1:36))
+sex_samps
+```
+
+## Results
+
+Density estimates per plot over the six sessions
+
+```{r}
+topmod <- m9
 
 #make a dataframe of values for DENSITY predictions
 d.pred.df <- data.frame(session = rep(factor(1:length(tdf)), 1)) #session specific
@@ -30,7 +91,7 @@ d.pred.df <- data.frame(session = rep(factor(1:length(tdf)), 1)) #session specif
 d_preds <- get.real(model = topmod, type = "dens", newdata = d.pred.df, d.factor = 4)
 d_preds$sex <- factor(d_preds$sex)
 levels(d_preds$sex) <- c("Female","Male")
-head(d_preds)
+# head(d_preds)
 
 session_df <- session_df %>%
   dplyr::mutate(Session = session,
@@ -41,7 +102,7 @@ d_preds <- d_preds %>%
   left_join(session_df)
 
 # add facet grid to separate plots and primary periods
-ggplot(d_preds, aes(x=pp, y=estimate, color = sex, group=sex)) +
+g1 <- ggplot(d_preds, aes(x=pp, y=estimate, color = sex, group=sex)) +
   geom_line(size = 1, position = position_dodge(width=0.5)) +
   geom_errorbar(aes(ymin=lwr,ymax=upr), width=0, size=0.75, color=1,
                 position = position_dodge(width=0.5)) +
@@ -50,7 +111,7 @@ ggplot(d_preds, aes(x=pp, y=estimate, color = sex, group=sex)) +
   theme_bw() + # scale_color_fivethirtyeight() +
   xlab("Session") + ylab(expression(Density~(per~m^2)))
 
-ggsave("analysis/figures/density_session.pdf")
+ggsave("analysis/figures/density_session.pdf", plot = g1)
 
 
 ggplot(d_preds, aes(x=date, y=estimate, color = sex, group=sex)) +
@@ -64,7 +125,11 @@ ggplot(d_preds, aes(x=date, y=estimate, color = sex, group=sex)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ggsave("analysis/figures/density_date.pdf")
+```
 
+## Spatial and Temporal Variation
+
+```{r}
 # Spatial and Temporal Variance/SD (in the means)
 
 # variation among plots
@@ -82,13 +147,16 @@ session_means <- d_preds %>%
             sd = sd(mean, na.rm = TRUE))
 
 temporal_sd <- sd(session_means$mean) # variation over time (averaged over space)
+```
 
-# Sex ratios
-sex_samps <- sapply(pcin_1_oscr$scrFrame$indCovs, function(x) table(x$sex))
-sex_samps <- rbind(sex_samps, round(sex_samps[1,] / apply(sex_samps,2,sum),2))
-dimnames(sex_samps) <- list(c("F","M","Prop.F"), paste0("S",1:36))
-sex_samps
+- Variation (SD) in density among plots averaged over time: `r spatial_sd`
+- Variation (SD) in density among sessions averaged over plots: `r temporal_sd`
 
+## Results
+
+Movement and Home Range (~90% kernel density)
+
+```{r}
 s_pred_df <- data.frame(session = rep(factor(1:36),2),
                         sex = rep(c(0,1),each=36))
 #now predict
@@ -114,7 +182,7 @@ ggplot(s_preds, aes(x=pp, y=estimate, color = sex, group=sex)) +
   geom_point(size=4, position = position_dodge(width=0.5)) +
   facet_wrap(~plot) +
   theme_bw() + # scale_color_fivethirtyeight() +
-  xlab("Session") + ylab(expression(Sigma~(m^2)))
+  xlab("Session") + ylab(expression(Sigma~(m)))
 
 ggsave("analysis/figures/sigma_session.pdf")
 
@@ -125,7 +193,11 @@ ggplot(s_preds, aes(x=pp, y=hr90_estimate, color = sex, group=sex)) +
   geom_point(size=4, position = position_dodge(width=0.5)) +
   facet_wrap(~plot) +
   theme_bw() + # scale_color_fivethirtyeight() +
-  xlab("Session") + ylab(expression(Sigma~(m^2)))
+  xlab("Session") + ylab(expression(Home~Range~(m^2)))
 
 ggsave("analysis/figures/home_range_session.pdf")
+```
 
+## Discussion
+
+Compare to other papers
