@@ -56,7 +56,9 @@ if(testing) {
 } else {
   pcin_1_ss <- make.ssDF(scrFrame = pcin_1_oscr$scrFrame, buffer = 3, res = 0.5)
 }
+pdf("analysis/figures/state_space_grid.pdf")
 plot(ssDF = pcin_1_ss, scrFrame = pcin_1_oscr$scrFrame)
+dev.off()
 
 #---------- SCR Analysis ---------
 #
@@ -140,6 +142,13 @@ m12 <- oSCR.fit(model = list(D ~ session + sex, #density
                              sig ~ session + sex), #space use
                 scrFrame = pcin_1_oscr$scrFrame,
                 ssDF = pcin_1_ss)
+
+
+m13 <- oSCR.fit(model = list(D ~ session + sex, #density
+                            p0 ~ b + soil + I(soil^2) + rain + soil * rain, #detection
+                            sig ~ session + sex), #space use
+               scrFrame = pcin_1_oscr$scrFrame,
+               ssDF = pcin_1_ss)
 
 # add season
 
