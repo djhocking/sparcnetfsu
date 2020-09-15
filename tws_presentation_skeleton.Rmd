@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "Spatial and Temporal Variability in Salamander Population Size"
 author: "Allison K. Williams & Daniel J. Hocking"
 output: powerpoint_presentation
 ---
