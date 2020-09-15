@@ -143,6 +143,13 @@ m12 <- oSCR.fit(model = list(D ~ session + sex, #density
                 scrFrame = pcin_1_oscr$scrFrame,
                 ssDF = pcin_1_ss)
 
+
+m13 <- oSCR.fit(model = list(D ~ session + sex, #density
+                            p0 ~ b + soil + I(soil^2) + rain + soil * rain, #detection
+                            sig ~ session + sex), #space use
+               scrFrame = pcin_1_oscr$scrFrame,
+               ssDF = pcin_1_ss)
+
 # add season
 
 
