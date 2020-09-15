@@ -76,6 +76,7 @@ sess_obs <- sally %>%
 
 sessions <- expand.grid(plot = 1:6, pp = 1:6) %>%
   dplyr::mutate(session = paste0("p", plot, "-", pp))
+
 pp_obs <- sally %>%
   group_by(pp) %>%
   dplyr::select(pp, ss) %>%
@@ -86,7 +87,8 @@ pp_obs <- sally %>%
   arrange(session)
 
 for(i in 1:nrow(pp_obs)) {
-  foo <- data.frame(session = pp_obs$session[i], ss = 1:pp_obs$K[i])
+  foo <- data.frame(session = pp_obs$session[i],
+                    ss = 1:pp_obs$K[i])
   if(i == 1) {
     session_df <- foo
   } else {
@@ -268,6 +270,16 @@ sess_obs == sess_obs_1
 for(i in 1:length(tdf)) {
   print(dim(tdf[[i]]))
 }
+
+pp_dates <- sally %>%
+  group_by(pp) %>%
+  dplyr::select(pp, date) %>%
+  summarise(date = median(date, na.rm = TRUE)) %>%
+  arrange(pp) %>%
+  as.data.frame()
+
+session_df <- session_df %>%
+  left_join(pp_dates)
 
 save(pcin_1, tdf, session_df, boards, pp_obs, file = here::here("analysis", "data", "derived_data", "oSCR_prepped.Rdata"))
 
