@@ -44,6 +44,13 @@ pcin_1_oscr$scrFrame
 par(mfrow = c(6, 6), mar = c(2, 2, 2, 2), oma = c(0, 0, 0, 0))
 plot(pcin_1_oscr$scrFrame, jit = 2)
 
+par(mfrow = c(2, 2), mar = c(2, 2, 2, 2), oma = c(0, 0, 0, 0))
+pdf("analysis/figures/spatial_cap_example.pdf")
+plot(pcin_1_oscr$scrFrame, jit = 2)
+dev.off()
+par(mfrow = c(1, 1))
+
+
 if(testing) {
   pcin_1_ss <- make.ssDF(scrFrame = pcin_1_oscr$scrFrame, buffer = 1, res = 1)
 } else {
