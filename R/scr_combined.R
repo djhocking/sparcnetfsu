@@ -56,7 +56,9 @@ if(testing) {
 } else {
   pcin_1_ss <- make.ssDF(scrFrame = pcin_1_oscr$scrFrame, buffer = 3, res = 0.5)
 }
+pdf("analysis/figures/state_space_grid.pdf")
 plot(ssDF = pcin_1_ss, scrFrame = pcin_1_oscr$scrFrame)
+dev.off()
 
 #---------- SCR Analysis ---------
 #
