@@ -16,7 +16,7 @@ library(oSCR)
 load(here::here("analysis", "data", "derived_data", "oSCR_prepped.Rdata"))
 
 # testing
-testing <- FALSE
+testing <- TRUE
 
 if(!dir.exists("analysis/results")) dir.create("analysis/results")
 
@@ -116,9 +116,11 @@ m7 <- oSCR.fit(model = list(D ~ session, #density
 
 m8 <- oSCR.fit(model = list(D ~ session, #density
                              p0 ~ b + soil*rain, #detection
-                             sig ~ 1), #space use
+                             sig ~ sex), #space use
                 scrFrame = pcin_1_oscr$scrFrame,
                 ssDF = pcin_1_ss)
+
+saveRDS(m8, file = here::here("analysis", "results", "m8.rds"))
 
 m9 <- oSCR.fit(model = list(D ~ session, #density
                              p0 ~ b + soil*rain, #detection
@@ -153,7 +155,7 @@ m13 <- oSCR.fit(model = list(D ~ session + sex, #density
 # add season
 
 # save all
-save(here::here("analysis", "results", "mod_results.RData"))
+save.image(here::here("analysis", "results", "mod_results.RData"))
 
 
 

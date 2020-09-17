@@ -1,13 +1,18 @@
 ---
 title: "Spatial and Temporal Variability in Salamander Population Size"
 author: "Allison K. Williams & Daniel J. Hocking"
-output: powerpoint_presentation
+output: word_document
 ---
+
+<!--
+output: powerpoint_presentation
+-->
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE,
                       warning = FALSE,
-                      message = FALSE)
+                      message = FALSE,
+                      fig.width = 10, fig.height = 6)
 ```
 
 ```{r}
@@ -60,22 +65,28 @@ Western MD, forest type, blah blah blah
 
 More methods
 
+## Methods - model
+
+* Density estimated independently by plot-period (=36 sessions)
+* Capture prob. ~ behavior + soil temp + precip + temp x precip
+
 ## Results
 
 ```{r}
-kable(m9)
+kable(print(m8))
 ```
 
 ## Results
 
-Sex Ratios
+Sex Ratios - full csv saved to results
 
 ```{r}
 # Sex ratios
 sex_samps <- sapply(pcin_1_oscr$scrFrame$indCovs, function(x) table(x$sex))
 sex_samps <- rbind(sex_samps, round(sex_samps[1,] / apply(sex_samps,2,sum),2))
 dimnames(sex_samps) <- list(c("F","M","Prop.F"), paste0("S",1:36))
-sex_samps
+kable(sex_samps[ , 1:6])
+write.csv(sex_samps, file = here::here("analysis", "results", "sex_ratios.csv"))
 ```
 
 ## Results
@@ -83,12 +94,17 @@ sex_samps
 Density estimates per plot over the six sessions
 
 ```{r}
-topmod <- m9
+topmod <- m8
+if(testing) {
+  d_factor = 1
+} else {
+  d_factor = 4
+}
 
 #make a dataframe of values for DENSITY predictions
 d.pred.df <- data.frame(session = rep(factor(1:length(tdf)), 1)) #session specific
 #now predict
-d_preds <- get.real(model = topmod, type = "dens", newdata = d.pred.df, d.factor = 4)
+d_preds <- get.real(model = topmod, type = "dens", newdata = d.pred.df, d.factor = d_factor)
 d_preds$sex <- factor(d_preds$sex)
 levels(d_preds$sex) <- c("Female","Male")
 # head(d_preds)
@@ -101,6 +117,23 @@ d_preds <- d_preds %>%
   dplyr::mutate(session = as.integer(as.factor(session))) %>%
   left_join(session_df)
 
+density_summary_session <- d_preds %>%
+  group_by(date) %>%
+  dplyr::select(date, pp, estimate) %>%
+  dplyr::summarise(pp = mean(pp),
+                   mean = mean(estimate),
+                   sd = sd(estimate))
+
+density_summary <- d_preds %>%
+  dplyr::select(estimate) %>%
+  dplyr::summarise(mean = mean(estimate),
+                   sd = sd(estimate))
+
+```
+
+The mean density is over time and space is `r round(mean(d_preds$estimate), 2)` $\pm$ `r round(sd(d_preds$estimate), 2)`.
+
+```{r}
 # add facet grid to separate plots and primary periods
 g1 <- ggplot(d_preds, aes(x=pp, y=estimate, color = sex, group=sex)) +
   geom_line(size = 1, position = position_dodge(width=0.5)) +
@@ -111,20 +144,22 @@ g1 <- ggplot(d_preds, aes(x=pp, y=estimate, color = sex, group=sex)) +
   theme_bw() + # scale_color_fivethirtyeight() +
   xlab("Session") + ylab(expression(Density~(per~m^2)))
 
-ggsave("analysis/figures/density_session.pdf", plot = g1)
+ggsave("analysis/figures/density_session.pdf", plot = g1, width = 8, height = 5)
 
 
-ggplot(d_preds, aes(x=date, y=estimate, color = sex, group=sex)) +
-  geom_line(size = 1, position = position_dodge(width=0.5)) +
+g2 <- ggplot(d_preds, aes(x=date, y=estimate, color = sex, group=sex)) +
+  geom_line(size = 1, position = position_dodge(width=40)) +
   geom_errorbar(aes(ymin=lwr,ymax=upr), width=0, size=0.75, color=1,
-                position = position_dodge(width=0.5)) +
-  geom_point(size=4, position = position_dodge(width=0.5)) +
+                position = position_dodge(width=40)) +
+  geom_point(size=4, position = position_dodge(width=40)) +
   facet_wrap(~plot) +
   theme_bw() + # scale_color_fivethirtyeight() +
   xlab("Date") + ylab(expression(Density~(per~m^2))) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggsave("analysis/figures/density_date.pdf")
+ggsave("analysis/figures/density_date.pdf", plot = g2, width = 8, height = 5)
+
+g2
 ```
 
 ## Spatial and Temporal Variation
@@ -135,16 +170,16 @@ ggsave("analysis/figures/density_date.pdf")
 # variation among plots
 plot_means <- d_preds %>%
   group_by(plot) %>%
-  summarise(mean = mean(mean, na.rm = TRUE),
-            sd = sd(mean, na.rm = TRUE))
+  summarise(mean = mean(estimate, na.rm = TRUE),
+            sd = sd(se, na.rm = TRUE))
 
 spatial_sd <- sd(plot_means$mean)
 
 # variation among sessions (primary periods)
 session_means <- d_preds %>%
   group_by(session) %>%
-  summarise(mean = mean(mean, na.rm = TRUE),
-            sd = sd(mean, na.rm = TRUE))
+  summarise(mean = mean(estimate, na.rm = TRUE),
+            sd = sd(se, na.rm = TRUE))
 
 temporal_sd <- sd(session_means$mean) # variation over time (averaged over space)
 ```
@@ -157,8 +192,88 @@ temporal_sd <- sd(session_means$mean) # variation over time (averaged over space
 Movement and Home Range (~90% kernel density)
 
 ```{r}
+s_pred_df <- data.frame(sex = rep(c("female", "male"), each = 1))
+
+#now predict
+s_preds <- get.real(model = topmod, type = "sig" , newdata = s_pred_df)
+s_preds$sex <- factor(s_preds$sex)
+levels(s_preds$sex) <- c("Female","Male")
+head(s_preds)
+
+# calculate 90% Home Range - delta method for uncertainty
+s_preds <- s_preds %>%
+  dplyr::mutate(hr90_estimate = pi * (estimate * 1.282) ^ 2,
+                hr90_sd = sqrt(se^2 * (2 * pi * estimate)^2),
+                hr90_lwr = hr90_estimate - 1.96 * hr90_sd,
+                hr90_upr = hr90_estimate + 1.96 * hr90_sd)
+
+g3 <- ggplot(s_preds, aes(x=sex, y=estimate, color = sex, group=sex)) +
+  geom_line(size = 1, position = position_dodge(width=0.5)) +
+  geom_errorbar(aes(ymin=lwr,ymax=upr), width=0, size=0.75, color=1,
+                position = position_dodge(width=0.5)) +
+  geom_point(size=4, position = position_dodge(width=0.5)) +
+  theme_bw() + # scale_color_fivethirtyeight() +
+  xlab("Session") + ylab(expression("Sigma"~(m)))
+
+ggsave("analysis/figures/sigma_session.pdf", plot = g3, width = 8, height = 5)
+
+g3
+
+g4 <- ggplot(s_preds, aes(x=sex, y=hr90_estimate, color = sex, group=sex)) +
+  geom_line(size = 1, position = position_dodge(width=0.5)) +
+  geom_errorbar(aes(ymin=hr90_lwr,ymax=hr90_upr), width=0, size=0.75, color=1,
+                position = position_dodge(width=0.5)) +
+  geom_point(size=4, position = position_dodge(width=0.5)) +
+  theme_bw() + # scale_color_fivethirtyeight() +
+  xlab("Session") + ylab(expression(Home~Range~(m^2)))
+
+ggsave("analysis/figures/home_range_session.pdf", plot = g4, width = 8, height = 5)
+
+# g4
+
+# g5 <- ggplot(data.frame(x = c(4, 6)), aes(x = x)) +
+#  stat_function(fun = dnorm, n = 101, args = list(mean = s_preds$hr90_estimate[1], sd = s_preds$hr90_sd[1]), geom = "area", fill = "red", alpha = 0.5) +
+#   stat_function(fun = dnorm, n = 101, args = list(mean = s_preds$hr90_estimate[2], sd = s_preds$hr90_sd[2]), geom = "area", fill = "blue", alpha = 0.5) +
+#   theme_bw() +
+#   guide_legend(title = "Sex",
+#                ) # scale_color_fivethirtyeight() +
+#   xlab("Session") + ylab(expression(Home~Range~(m^2)))
+  
+# library(MASS)       # for fitdistr(...)
+hr90 <- data.frame(sex = s_preds$sex, hr90 = rnorm(100000, mean = s_preds$hr90_estimate, sd = s_preds$hr90_sd)) %>%
+  arrange(sex, hr90)
+
+dat <- with(density(hr90[which(hr90$sex == "Female"), "hr90"], kernel = c("gaussian")), data.frame(x, y)) %>%
+  dplyr::rename(hr90 = x, freq = y) %>%
+  dplyr::mutate(sex = "Female")
+
+dat2 <- with(density(hr90[which(hr90$sex == "Male"), "hr90"], kernel = c("gaussian")), data.frame(x, y)) %>%
+  dplyr::rename(hr90 = x, freq = y) %>%
+  dplyr::mutate(sex = "Male")
+
+dat <- bind_rows(dat, dat2)
+
+g5 <- ggplot(data = dat, aes(x = hr90, y = freq, color = sex, group = sex)) +
+  geom_area(aes(fill = sex), alpha = 0.3) +
+  xlab(expression(Home~Range~(m^2))) +
+  ylab("Kernel Density") + 
+  theme_bw()
+
+# g5 <- ggplot(data = dat, aes(x = hr90, y = ..density.., color = sex, group = sex)) +
+#   stat_density(aes(fill = sex), alpha = 0.3) +
+#   xlab(expression(Home~Range~(m^2))) +
+#   ylab("Kernel Density") + 
+#   theme_bw()
+
+ggsave("analysis/figures/home_range_session.pdf", plot = g5, width = 8, height = 5)
+
+g5
+```
+
+
+```{r, eval = FALSE}
 s_pred_df <- data.frame(session = rep(factor(1:36),2),
-                        sex = rep(c(0,1),each=36))
+                        sex = rep(c("female", "male"),each=36))
 #now predict
 s_preds <- get.real(model = topmod, type = "sig", newdata = s_pred_df)
 s_preds$sex <- factor(s_preds$sex)
@@ -168,14 +283,14 @@ head(s_preds)
 # calculate 90% Home Range - delta method for uncertainty
 s_preds <- s_preds %>%
   dplyr::mutate(session = as.integer(as.factor(session)),
-                hr90_estimate = pi() * (estimate * 1.282) ^ 2,
-                hr90_sd = sqrt(sd^2 * (2 * pi() * estimate)^2),
-                hr90_lwd = estimate - 1.96 * hr90_sd,
-                hr90_upr = estimate + 1.96 * hr90_sd) %>%
+                hr90_estimate = pi * (estimate * 1.282) ^ 2,
+                hr90_sd = sqrt(se^2 * (2 * pi * estimate)^2),
+                hr90_lwr = hr90_estimate - 1.96 * hr90_sd,
+                hr90_upr = hr90_estimate + 1.96 * hr90_sd) %>%
   left_join(session_df)
 
 
-ggplot(s_preds, aes(x=pp, y=estimate, color = sex, group=sex)) +
+g3 <- ggplot(s_preds, aes(x=pp, y=estimate, color = sex, group=sex)) +
   geom_line(size = 1, position = position_dodge(width=0.5)) +
   geom_errorbar(aes(ymin=lwr,ymax=upr), width=0, size=0.75, color=1,
                 position = position_dodge(width=0.5)) +
@@ -184,9 +299,9 @@ ggplot(s_preds, aes(x=pp, y=estimate, color = sex, group=sex)) +
   theme_bw() + # scale_color_fivethirtyeight() +
   xlab("Session") + ylab(expression(Sigma~(m)))
 
-ggsave("analysis/figures/sigma_session.pdf")
+ggsave("analysis/figures/sigma_session.pdf", plot = g3)
 
-ggplot(s_preds, aes(x=pp, y=hr90_estimate, color = sex, group=sex)) +
+g4 <- ggplot(s_preds, aes(x=pp, y=hr90_estimate, color = sex, group=sex)) +
   geom_line(size = 1, position = position_dodge(width=0.5)) +
   geom_errorbar(aes(ymin=hr90_lwr,ymax=hr90_upr), width=0, size=0.75, color=1,
                 position = position_dodge(width=0.5)) +
@@ -195,9 +310,84 @@ ggplot(s_preds, aes(x=pp, y=hr90_estimate, color = sex, group=sex)) +
   theme_bw() + # scale_color_fivethirtyeight() +
   xlab("Session") + ylab(expression(Home~Range~(m^2)))
 
-ggsave("analysis/figures/home_range_session.pdf")
+ggsave("analysis/figures/home_range_session.pdf", plot = g4)
+
+g4
+```
+
+
+## Results 
+
+Soil temperature moderates the effect of rain. There is more surface activity with increasing rain at low temperatures but this effect goes away at higher temperatures and the trend may even reverse.
+
+```{r}
+#make a dataframe of values for DETECTION predictions
+p_pred_df <- data.frame(rain = rep(seq(-1, 2.5, length.out = 100), 2),
+                        soil = rep(c(-2, 2), each = 100),
+                        b = 0) #, #pr(initial capture)
+# sex=rep(c(0,1),each=100)) #binary sex
+#now predict
+p_preds <- get.real(model = topmod, type = "det", newdata = p_pred_df)
+# p.preds$sex <- factor(p.preds$sex)
+# levels(p.preds$sex) <- c("Female","Male")
+p_preds$soil <- factor(p_preds$soil)
+levels(p_preds$soil) <- c("Cold","Hot")
+
+g6 <- ggplot(p_preds, aes(x = (rain * stds[which(stds$var == "rain"), "sd"]) + stds[which(stds$var == "rain"), "mean"], y = estimate, color = soil, group = soil)) +
+ geom_ribbon(aes(ymin=lwr,ymax=upr, fill = soil), alpha=0.1) +
+geom_line(size=1.5) +
+  theme_bw() + # scale_color_fivethirtyeight() +
+  xlab("Rain 3-day total(cm)") + ylab("Initial Capture Prob.") + 
+  coord_cartesian(xlim = c(0, 4))
+
+ggsave("analysis/figures/detection_ain_soil.pdf", plot = g6, width = 8, height = 5)
+
+g6
+```
+
+Another way to look at it with rain moderating the effect of temperature:
+
+```{r}
+#make a dataframe of values for DETECTION predictions
+p_pred_df <- data.frame(soil = rep(seq(-2, 2, length.out = 100), 2),
+                        rain = rep(c(-1, 2.5), each = 100),
+                        b = 0) #, #pr(initial capture)
+# sex=rep(c(0,1),each=100)) #binary sex
+#now predict
+p_preds <- get.real(model = topmod, type = "det", newdata = p_pred_df)
+# p.preds$sex <- factor(p.preds$sex)
+# levels(p.preds$sex) <- c("Female","Male")
+p_preds$rain <- factor(p_preds$rain)
+levels(p_preds$rain) <- c("Dry","Wet")
+
+g7 <- ggplot(p_preds, aes(x = (soil * stds[which(stds$var == "soil"), "sd"]) + stds[which(stds$var == "soil"), "mean"], y = estimate, color = rain, group = rain)) +
+ geom_ribbon(aes(ymin=lwr,ymax=upr, fill = rain), alpha=0.1) +
+geom_line(size=1.5) +
+  theme_bw() + # scale_color_fivethirtyeight() +
+  xlab("Soil Temperature (C)") + ylab("Initial Capture Prob.")
+
+ggsave("analysis/figures/detection_soil_rain.pdf", plot = g7, width = 8, height = 5)
+
+g7
 ```
 
 ## Discussion
 
-Compare to other papers
+Compare to other papers and interpretation
+
+## Future Directions
+
+- Robust Design:
+  - Temporary Emigration
+  - Survival (~f(seasonal conditions))
+- Bayesian Implementation
+- Reproductive effort over time
+- Growth rates
+- Interactions with other species
+- Comparison across range of red-backed salamander (SPARCnet)
+
+## Thank You
+
+- Acknowledgments (Jacey Brooks, Natalie Haydt, Elizabeth Myers, Jason Shaffer, Erin Gaylord, Justin Hansen, Jess Raney, Brady Flowers, Laura Smith, Nina Grove, Kenny Weaver, Shelbi Sullivan, Frostburg State University Biology Department and Students)
+- This can be done with bullets or just pictures - don't need everyone
+

@@ -154,6 +154,9 @@ rain_s <- rain %>%
   dplyr::select(session, ss, rain_3d_s) %>%
   group_split()
 
+# get stardization parameters
+stds <- data.frame(var = c("rain", "soil"), mean = c(mean(rain$rain_3d, na.rm = TRUE), mean(temp$soil, na.rm = TRUE)), sd = c(sd(rain$rain_3d, na.rm = TRUE), sd(temp$soil, na.rm = TRUE)))
+
 # construct tdf
 doy <- sally %>%
   group_by(pp, ss) %>%
@@ -281,7 +284,7 @@ pp_dates <- sally %>%
 session_df <- session_df %>%
   left_join(pp_dates)
 
-save(pcin_1, tdf, session_df, boards, pp_obs, file = here::here("analysis", "data", "derived_data", "oSCR_prepped.Rdata"))
+save(pcin_1, tdf, stds, session_df, boards, pp_obs, file = here::here("analysis", "data", "derived_data", "oSCR_prepped.Rdata"))
 
 rm(list = ls())
 gc()
