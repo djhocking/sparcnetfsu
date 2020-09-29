@@ -52,7 +52,7 @@ pcin_1 <- sally %>%
                 !(id %in% c("<NA>"))) %>%
   # tidyr::unite("id", c(sex, morph, markf), remove = FALSE) %>%
   dplyr::select(session, id, ss, board, sex) %>%
-  filter(sex %in% c("M", "F")) %>%
+  # filter(sex %in% c("M", "F")) %>%
   dplyr::mutate(id = as.factor(id),
                 sex = as.factor(if_else(sex %in% c("M", "F"), sex, "U"))) %>% # oSCR can only handle 2 sexes
   arrange(session, ss, id) %>%
@@ -283,6 +283,8 @@ pp_dates <- sally %>%
 
 session_df <- session_df %>%
   left_join(pp_dates)
+
+saveRDS(session_df, file = here::here("analysis", "data", "derived_data", "session_df.rds"))
 
 save(pcin_1, tdf, stds, session_df, boards, pp_obs, file = here::here("analysis", "data", "derived_data", "oSCR_prepped.Rdata"))
 

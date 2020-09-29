@@ -13,4 +13,8 @@ R/sandbox.R
 analysis/figures/
 
 analysis/data/raw_data/sally_counts.csv
+analysis/results/
+
+tws_presentation_skeleton.ppt*
+tws_presentation_skeleton.doc*
 

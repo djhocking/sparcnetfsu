@@ -50,6 +50,12 @@ plot(pcin_1_oscr$scrFrame, jit = 2)
 dev.off()
 par(mfrow = c(1, 1))
 
+par(mfrow = c(2, 2), mar = c(2, 2, 2, 2), oma = c(0, 0, 0, 0))
+png("analysis/figures/spatial_cap_example.png")
+plot(pcin_1_oscr$scrFrame, jit = 2)
+dev.off()
+par(mfrow = c(1, 1))
+
 
 if(testing) {
   pcin_1_ss <- make.ssDF(scrFrame = pcin_1_oscr$scrFrame, buffer = 1, res = 1)
@@ -57,6 +63,10 @@ if(testing) {
   pcin_1_ss <- make.ssDF(scrFrame = pcin_1_oscr$scrFrame, buffer = 3, res = 0.5)
 }
 pdf("analysis/figures/state_space_grid.pdf")
+plot(ssDF = pcin_1_ss, scrFrame = pcin_1_oscr$scrFrame)
+dev.off()
+
+png("analysis/figures/state_space_grid.png")
 plot(ssDF = pcin_1_ss, scrFrame = pcin_1_oscr$scrFrame)
 dev.off()
 
@@ -157,5 +167,8 @@ m13 <- oSCR.fit(model = list(D ~ session + sex, #density
 # save all
 save.image(here::here("analysis", "results", "mod_results.RData"))
 
+# cleanup
+rm(list = ls())
+gc()
 
 

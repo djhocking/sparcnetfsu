@@ -78,6 +78,21 @@ kable(print(m8))
 
 ## Results
 
+We had a total of `r nrow(pcin_1)` captures of `r length(unique(pcin_1$id))` individuals across all plots and surveys. 
+
+```{r}
+pcin_1_oscr$scrFrame
+```
+
+```{r, eval = FALSE}
+pcin_1 %>%
+  group_by(id) %>%
+  dplyr::select(id) %>%
+  summarise(count = n())
+```
+
+## Results
+
 Sex Ratios - full csv saved to results
 
 ```{r}
@@ -85,7 +100,7 @@ Sex Ratios - full csv saved to results
 sex_samps <- sapply(pcin_1_oscr$scrFrame$indCovs, function(x) table(x$sex))
 sex_samps <- rbind(sex_samps, round(sex_samps[1,] / apply(sex_samps,2,sum),2))
 dimnames(sex_samps) <- list(c("F","M","Prop.F"), paste0("S",1:36))
-kable(sex_samps[ , 1:6])
+kable(as.data.frame(sex_samps[ , 1:6]))
 write.csv(sex_samps, file = here::here("analysis", "results", "sex_ratios.csv"))
 ```
 
@@ -118,20 +133,22 @@ d_preds <- d_preds %>%
   left_join(session_df)
 
 density_summary_session <- d_preds %>%
-  group_by(date) %>%
-  dplyr::select(date, pp, estimate) %>%
+  dplyr::select(date, pp, plot, estimate) %>%
+  distinct() %>%
+  group_by(date, plot) %>%
   dplyr::summarise(pp = mean(pp),
-                   mean = mean(estimate),
-                   sd = sd(estimate))
+                   adult_density = sum(estimate))
 
-density_summary <- d_preds %>%
-  dplyr::select(estimate) %>%
-  dplyr::summarise(mean = mean(estimate),
-                   sd = sd(estimate))
+density_summary <- density_summary_session %>%
+  ungroup() %>%
+  dplyr::select(adult_density) %>%
+  dplyr::summarise(mean = mean(adult_density))
 
 ```
 
-The mean density is over time and space is `r round(mean(d_preds$estimate), 2)` $\pm$ `r round(sd(d_preds$estimate), 2)`.
+The mean density is over time and space is `r round(mean(density_summary_session$adult_density), 2)`$\pm$ `r round(sd(density_summary_session$adult_density), 2)`.
+
+This means that we would expect `r round(5350 * mean(density_summary_session$adult_density), 0)` red-backed salamanders in an area of this forest the size of a football field.
 
 ```{r}
 # add facet grid to separate plots and primary periods
@@ -290,7 +307,7 @@ s_preds <- s_preds %>%
   left_join(session_df)
 
 
-g3 <- ggplot(s_preds, aes(x=pp, y=estimate, color = sex, group=sex)) +
+g6 <- ggplot(s_preds, aes(x=pp, y=estimate, color = sex, group=sex)) +
   geom_line(size = 1, position = position_dodge(width=0.5)) +
   geom_errorbar(aes(ymin=lwr,ymax=upr), width=0, size=0.75, color=1,
                 position = position_dodge(width=0.5)) +
@@ -299,9 +316,9 @@ g3 <- ggplot(s_preds, aes(x=pp, y=estimate, color = sex, group=sex)) +
   theme_bw() + # scale_color_fivethirtyeight() +
   xlab("Session") + ylab(expression(Sigma~(m)))
 
-ggsave("analysis/figures/sigma_session.pdf", plot = g3)
+ggsave("analysis/figures/sigma_session.pdf", plot = g6)
 
-g4 <- ggplot(s_preds, aes(x=pp, y=hr90_estimate, color = sex, group=sex)) +
+g7 <- ggplot(s_preds, aes(x=pp, y=hr90_estimate, color = sex, group=sex)) +
   geom_line(size = 1, position = position_dodge(width=0.5)) +
   geom_errorbar(aes(ymin=hr90_lwr,ymax=hr90_upr), width=0, size=0.75, color=1,
                 position = position_dodge(width=0.5)) +
@@ -310,9 +327,9 @@ g4 <- ggplot(s_preds, aes(x=pp, y=hr90_estimate, color = sex, group=sex)) +
   theme_bw() + # scale_color_fivethirtyeight() +
   xlab("Session") + ylab(expression(Home~Range~(m^2)))
 
-ggsave("analysis/figures/home_range_session.pdf", plot = g4)
+ggsave("analysis/figures/home_range_session.pdf", plot = g7)
 
-g4
+g7
 ```
 
 
@@ -333,16 +350,16 @@ p_preds <- get.real(model = topmod, type = "det", newdata = p_pred_df)
 p_preds$soil <- factor(p_preds$soil)
 levels(p_preds$soil) <- c("Cold","Hot")
 
-g6 <- ggplot(p_preds, aes(x = (rain * stds[which(stds$var == "rain"), "sd"]) + stds[which(stds$var == "rain"), "mean"], y = estimate, color = soil, group = soil)) +
+g8 <- ggplot(p_preds, aes(x = (rain * stds[which(stds$var == "rain"), "sd"]) + stds[which(stds$var == "rain"), "mean"], y = estimate, color = soil, group = soil)) +
  geom_ribbon(aes(ymin=lwr,ymax=upr, fill = soil), alpha=0.1) +
 geom_line(size=1.5) +
   theme_bw() + # scale_color_fivethirtyeight() +
   xlab("Rain 3-day total(cm)") + ylab("Initial Capture Prob.") + 
   coord_cartesian(xlim = c(0, 4))
 
-ggsave("analysis/figures/detection_ain_soil.pdf", plot = g6, width = 8, height = 5)
+ggsave("analysis/figures/detection_ain_soil.pdf", plot = g8, width = 8, height = 5)
 
-g6
+g8
 ```
 
 Another way to look at it with rain moderating the effect of temperature:
@@ -360,15 +377,15 @@ p_preds <- get.real(model = topmod, type = "det", newdata = p_pred_df)
 p_preds$rain <- factor(p_preds$rain)
 levels(p_preds$rain) <- c("Dry","Wet")
 
-g7 <- ggplot(p_preds, aes(x = (soil * stds[which(stds$var == "soil"), "sd"]) + stds[which(stds$var == "soil"), "mean"], y = estimate, color = rain, group = rain)) +
+g9 <- ggplot(p_preds, aes(x = (soil * stds[which(stds$var == "soil"), "sd"]) + stds[which(stds$var == "soil"), "mean"], y = estimate, color = rain, group = rain)) +
  geom_ribbon(aes(ymin=lwr,ymax=upr, fill = rain), alpha=0.1) +
 geom_line(size=1.5) +
   theme_bw() + # scale_color_fivethirtyeight() +
   xlab("Soil Temperature (C)") + ylab("Initial Capture Prob.")
 
-ggsave("analysis/figures/detection_soil_rain.pdf", plot = g7, width = 8, height = 5)
+ggsave("analysis/figures/detection_soil_rain.pdf", plot = g9, width = 8, height = 5)
 
-g7
+g9
 ```
 
 ## Discussion
