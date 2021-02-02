@@ -23,6 +23,7 @@ ms
 #pick the model with the lowest AIC
 topmod <- fl[[which.min(sapply(fl,function(x) x$AIC))]]
 
+topmod <- m8
 
 #make a dataframe of values for DENSITY predictions
 d.pred.df <- data.frame(session = rep(factor(1:length(tdf)), 1)) #session specific
@@ -70,16 +71,16 @@ ggsave("analysis/figures/density_date.pdf")
 # variation among plots
 plot_means <- d_preds %>%
   group_by(plot) %>%
-  summarise(mean = mean(mean, na.rm = TRUE),
-            sd = sd(mean, na.rm = TRUE))
+  summarise(mean = mean(estimate, na.rm = TRUE),
+            sd = sd(estimate, na.rm = TRUE))
 
 spatial_sd <- sd(plot_means$mean)
 
 # variation among sessions (primary periods)
 session_means <- d_preds %>%
   group_by(session) %>%
-  summarise(mean = mean(mean, na.rm = TRUE),
-            sd = sd(mean, na.rm = TRUE))
+  summarise(mean = mean(estimate, na.rm = TRUE),
+            sd = sd(estimate, na.rm = TRUE))
 
 temporal_sd <- sd(session_means$mean) # variation over time (averaged over space)
 
@@ -94,6 +95,20 @@ s_pred_df <- data.frame(session = rep(factor(1:36),2),
 #now predict
 s_preds <- get.real(model = topmod, type = "sig", newdata = s_pred_df)
 s_preds$sex <- factor(s_preds$sex)
+levels(s_preds$sex) <- c("Female","Male")
+head(s_preds)
+
+s_pred_df <- data.frame(session = rep(factor(1:36),2),
+                        sex = rep(c(0,1),each=36))
+s_preds <- get.real(model = m0, type = "sig", newdata = s_pred_df)
+s_preds$sex <- factor(s_preds$sex)
+levels(s_preds$sex) <- c("Female","Male")
+head(s_preds)
+
+s_pred_df <- data.frame(sex = rep(c(0,1),each=1), sig.sex = rep(c(0,1),each=1),
+                        sexmale = rep(c(0,1),each=1))
+s_preds <- get.real(model = m0b, type = "sig", newdata = s_pred_df)
+  s_preds$sex <- factor(s_preds$sex)
 levels(s_preds$sex) <- c("Female","Male")
 head(s_preds)
 

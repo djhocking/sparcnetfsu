@@ -16,7 +16,7 @@ library(oSCR)
 load(here::here("analysis", "data", "derived_data", "oSCR_prepped.Rdata"))
 
 # testing
-testing <- TRUE
+testing <- FALSE
 
 if(!dir.exists("analysis/results")) dir.create("analysis/results")
 
@@ -82,6 +82,12 @@ m0 <- oSCR.fit(model = list(D ~ 1, #density
                             sig ~ 1), #space use
                scrFrame = pcin_1_oscr$scrFrame, ssDF = pcin_1_ss)
 
+m0b <- oSCR.fit(model = list(D ~ 1, #density
+                            p0 ~ 1, #detection
+                            sig ~ sex), #space use
+               scrFrame = pcin_1_oscr$scrFrame, ssDF = pcin_1_ss)
+
+
 m1 <- oSCR.fit(model = list(D ~ session, #density
                              p0 ~ air, #detection
                              sig ~ 1), #space use
@@ -131,6 +137,14 @@ m8 <- oSCR.fit(model = list(D ~ session, #density
                 ssDF = pcin_1_ss)
 
 saveRDS(m8, file = here::here("analysis", "results", "m8.rds"))
+
+m8b <- oSCR.fit(model = list(D ~ session, #density
+                            p0 ~ b + soil*rain, #detection
+                            sig ~ 1), #space use
+               scrFrame = pcin_1_oscr$scrFrame,
+               ssDF = pcin_1_ss)
+
+saveRDS(m8b, file = here::here("analysis", "results", "m8b.rds"))
 
 m9 <- oSCR.fit(model = list(D ~ session, #density
                              p0 ~ b + soil*rain, #detection
